@@ -5,8 +5,44 @@ require 'retryable'
 module Infobase
   class Base
 
+    def initialize(hash)
+      @item = hash
+    end
+
+    def [](key)
+      @item[key.to_s]
+    end
+
+    def keys
+      @item.keys
+    end
+
+    def to_s
+      @item['to_s'] || super
+    end
+
+    def method_missing(symbol, &block)
+      key = symbol.to_s
+
+      return @item[key] if @item.keys.include?(key)
+
+      super
+    end
+
+    def respond_to?(symbol, include_private = false)
+      @item.keys.include?(symbol.to_s) || super
+    end
+
     def self.find(id, params = {})
       request(:get, params, path_with_id(id))
+    end
+
+    def self.singular_name
+      to_s.split('::').last.underscore
+    end
+
+    def self.plural_name
+      singular_name.pluralize
     end
 
     def self.get(params = {})
@@ -25,6 +61,9 @@ module Infobase
       request(:delete, {}, path_with_id(id))
     end
 
+    def self.search(params = {})
+      request(:post, params, "#{default_path}/search")
+    end
 
     def self.request(method, params, path = nil)
       raise 'You need to configure Infobase with your access_token.' unless Infobase.access_token
@@ -53,7 +92,12 @@ module Infobase
     def self.handle_response(response, request, result)
       case response.code
       when 200..299
-        Oj.load(response)
+        json = Oj.load(response)
+        if json[singular_name]
+          new(json[singular_name])
+        else
+          json[plural_name].collect { |hash| new(hash) }
+        end
       when 400
         raise RestClient::BadRequest, response
       when 500
@@ -66,7 +110,7 @@ module Infobase
     end
 
     def self.default_path
-      to_s.split('::').last.underscore.pluralize
+      plural_name
     end
 
     def self.path_with_id(id)
