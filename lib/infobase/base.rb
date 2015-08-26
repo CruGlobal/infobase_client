@@ -96,7 +96,8 @@ module Infobase
         if json[singular_name]
           new(json[singular_name])
         else
-          json[plural_name].collect { |hash| new(hash) }
+          json[plural_name] = json[plural_name].collect { |hash| new(hash) }
+          json
         end
       when 400
         raise RestClient::BadRequest, response
