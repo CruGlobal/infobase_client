@@ -75,15 +75,15 @@ module Infobase
 
       case method
       when :post
-        RestClient.post(url, params, authorization: "Bearer #{Infobase.access_token}", :timeout => -1) { |response, request, result, &block|
+        RestClient.post(url, params, authorization: "Bearer #{Infobase.access_token}", timeout: nil) { |response, request, result, &block|
           handle_response(response, request, result)
         }
       when :put
-        RestClient.put(url, params, authorization: "Bearer #{Infobase.access_token}", :timeout => -1) { |response, request, result, &block|
+        RestClient.put(url, params, authorization: "Bearer #{Infobase.access_token}", timeout: nil) { |response, request, result, &block|
           handle_response(response, request, result)
         }
       else
-        RestClient::Request.execute(:method => method, :url => url, :headers => {params: params, authorization: "Bearer #{Infobase.access_token}"}, :timeout => -1) { |response, request, result, &block|
+        RestClient::Request.execute(method: method, url: url, headers: {params: params, authorization: "Bearer #{Infobase.access_token}"}, timeout: nil) { |response, request, result, &block|
           handle_response(response, request, result)
         }
       end
